@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/index.js",
-    "test": "node --test tests/",
+    "test": "node --test",
     "lint": "eslint ."
   },
   "dependencies": {
