@@ -1,0 +1,18 @@
+{
+  "name": "taller-app",
+  "version": "1.0.0",
+  "description": "App de ejemplo para el taller de CI/CD con GitHub Actions y Docker",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test tests/",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "eslint": "^9.13.0"
+  }
+}

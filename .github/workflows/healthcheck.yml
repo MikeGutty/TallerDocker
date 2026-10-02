@@ -1,0 +1,20 @@
+name: Healthcheck Producción
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar que el servicio responde en /health
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.RENDER_URL }}/health")
+          echo "Código de respuesta: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "El healthcheck falló (código $STATUS)"
+            exit 1
+          fi
+          echo "El servicio responde correctamente"

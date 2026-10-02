@@ -1,0 +1,51 @@
+name: Docker Publish
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Normalizar nombre de la imagen (GHCR exige minúsculas)
+        id: imagen
+        run: |
+          echo "nombre=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login a GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir y publicar la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: ./04-app
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ${{ steps.imagen.outputs.nombre }}:latest
+            ${{ steps.imagen.outputs.nombre }}:${{ github.sha }}
+
+      - name: Escanear vulnerabilidades con Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ steps.imagen.outputs.nombre }}:${{ github.sha }}
+          format: table
+          exit-code: "0"
+          severity: "CRITICAL,HIGH"
