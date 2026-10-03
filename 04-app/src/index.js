@@ -7,6 +7,10 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+app.get("/error", (req, res) => {
+  res.status(500).json({ status: "error", message: "Error interno del servidor" });
+})
+
 app.get("/", (req, res) => {
   res.status(200).send("Bienvenido al taller de CI/CD con GitHub Actions y Docker");
 });
