@@ -15,6 +15,10 @@ app.get("/hello", (req, res) => {
   res.status(200).json({ message: "Hola, mundo!" });
 });
 
+app.get("/goodbye", (req, res) => {
+  res.status(200).json({ message: "Adiós, mundo!" });
+});
+
 app.get("/", (req, res) => {
   res.status(200).send("Bienvenido al taller de CI/CD con GitHub Actions y Docker");
 });
