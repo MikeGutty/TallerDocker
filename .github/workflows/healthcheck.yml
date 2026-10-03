@@ -4,17 +4,45 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 * * * *"
+  workflow_run:
+    workflows: ["Docker Publish"]
+    types: [completed]
 
 jobs:
   verificar:
+    # Si nos dispara el workflow_run, solo correr si Docker Publish terminó bien.
+    # Si nos disparan manualmente o por cron, siempre correr.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Verificar que el servicio responde en /health
+      - name: Esperar y verificar que el servicio responde en /health
+        # Secreto RENDER_URL (distinto de RENDER_DEPLOY_HOOK_URL, que usa docker-publish.yml).
+        # Este verifica que el deploy ya haya funcionado; RENDER_DEPLOY_HOOK_URL es el que lo dispara.
+        # Ver pasos/07-deploy.md, sección "Los dos secretos de este paso".
+        env:
+          URL: ${{ secrets.RENDER_URL }}
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.RENDER_URL }}/health")
-          echo "Código de respuesta: $STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "El healthcheck falló (código $STATUS)"
+          if [ -z "$URL" ]; then
+            echo "RENDER_URL no está configurado todavía (ver pasos/07-deploy.md)"
             exit 1
           fi
-          echo "El servicio responde correctamente"
+
+          # El deploy en Render tarda un poco en estar listo, así que reintentamos
+          # en vez de fallar al primer intento.
+          INTENTOS=10
+          ESPERA=15
+
+          for i in $(seq 1 $INTENTOS); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
+            echo "Intento $i/$INTENTOS — código de respuesta: $STATUS"
+
+            if [ "$STATUS" = "200" ]; then
+              echo "El servicio responde correctamente"
+              exit 0
+            fi
+
+            sleep $ESPERA
+          done
+
+          echo "El healthcheck falló después de $INTENTOS intentos"
+          exit 1

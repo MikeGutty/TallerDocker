@@ -52,3 +52,17 @@ jobs:
           format: table
           exit-code: "0"
           severity: "CRITICAL,HIGH"
+
+      - name: Disparar el deploy en Render
+        # Secreto RENDER_DEPLOY_HOOK_URL (distinto de RENDER_URL, que usa healthcheck.yml).
+        # Este dispara el deploy; RENDER_URL después verifica que haya funcionado.
+        # Ver pasos/07-deploy.md, sección "Los dos secretos de este paso".
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL no está configurado todavía (ver pasos/07-deploy.md). Omitiendo deploy automático."
+          else
+            curl -s -X POST "$DEPLOY_HOOK"
+            echo "Deploy de Render disparado. Render va a jalar la imagen ${{ steps.imagen.outputs.nombre }}:latest recién publicada."
+          fi
