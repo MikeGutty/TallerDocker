@@ -21,6 +21,11 @@ jobs:
         run: |
           echo "nombre=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
+      - name: Leer la versión de la app (package.json)
+        id: version
+        run: |
+          echo "numero=$(jq -r '.version' 04-app/package.json)" >> "$GITHUB_OUTPUT"
+
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -40,7 +45,7 @@ jobs:
           cache-to: type=gha,mode=max
           tags: |
             ${{ steps.imagen.outputs.nombre }}:latest
-            ${{ steps.imagen.outputs.nombre }}:${{ github.sha }}
+            ${{ steps.imagen.outputs.nombre }}:${{ steps.version.outputs.numero }}
 
       - name: Escanear vulnerabilidades con Trivy
         # Pinned al commit SHA de v0.35.0, la única tag que NO se vio comprometida
@@ -48,7 +53,7 @@ jobs:
         # No usar tags mutables (@v0.X) para esta action: ver pasos/06-seguridad.md
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
-          image-ref: ${{ steps.imagen.outputs.nombre }}:${{ github.sha }}
+          image-ref: ${{ steps.imagen.outputs.nombre }}:${{ steps.version.outputs.numero }}
           format: table
           exit-code: "0"
           severity: "CRITICAL,HIGH"
