@@ -1,0 +1,15 @@
+[project]
+name = "fastapi-todo-app"
+version = "1.0.0"
+description = "API de tareas (To-Do) de ejemplo, para comparar Node vs Python en el taller de CI/CD con GitHub Actions y Docker"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

@@ -1,0 +1,44 @@
+name: CI FastAPI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "fastapi-app/**"
+      - ".github/workflows/ci-fastapi.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "fastapi-app/**"
+      - ".github/workflows/ci-fastapi.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./fastapi-app
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: "pip"
+          cache-dependency-path: fastapi-app/requirements*.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint (Ruff)
+        run: ruff check .
+
+      - name: Tests (pytest)
+        run: pytest

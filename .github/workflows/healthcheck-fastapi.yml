@@ -1,0 +1,42 @@
+name: Healthcheck Producción FastAPI
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 * * * *"
+  workflow_run:
+    workflows: ["Docker Publish FastAPI"]
+    types: [completed]
+
+jobs:
+  verificar:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Esperar y verificar que el servicio responde en /health
+        # Secreto RENDER_URL_FASTAPI (distinto del de 04-app).
+        env:
+          URL: ${{ secrets.RENDER_URL_FASTAPI }}
+        run: |
+          if [ -z "$URL" ]; then
+            echo "RENDER_URL_FASTAPI no está configurado todavía"
+            exit 1
+          fi
+
+          INTENTOS=10
+          ESPERA=15
+
+          for i in $(seq 1 $INTENTOS); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
+            echo "Intento $i/$INTENTOS — código de respuesta: $STATUS"
+
+            if [ "$STATUS" = "200" ]; then
+              echo "El servicio responde correctamente"
+              exit 0
+            fi
+
+            sleep $ESPERA
+          done
+
+          echo "El healthcheck falló después de $INTENTOS intentos"
+          exit 1

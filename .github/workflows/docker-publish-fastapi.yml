@@ -1,0 +1,75 @@
+name: Docker Publish FastAPI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "fastapi-app/**"
+      - ".github/workflows/docker-publish-fastapi.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Normalizar nombre de la imagen (GHCR exige minúsculas)
+        # Sufijo "-fastapi" para no chocar con la imagen de 04-app (Node),
+        # que usa el mismo nombre de repositorio como base.
+        id: imagen
+        run: |
+          echo "nombre=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-fastapi" >> "$GITHUB_OUTPUT"
+
+      - name: Leer la versión de la app (pyproject.toml)
+        id: version
+        run: |
+          echo "numero=$(grep -m1 '^version' fastapi-app/pyproject.toml | sed -E 's/version = "(.*)"/\1/')" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login a GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir y publicar la imagen (stage "prod")
+        uses: docker/build-push-action@v6
+        with:
+          context: ./fastapi-app
+          target: prod
+          push: true
+          cache-from: type=gha,scope=fastapi
+          cache-to: type=gha,mode=max,scope=fastapi
+          tags: |
+            ${{ steps.imagen.outputs.nombre }}:latest
+            ${{ steps.imagen.outputs.nombre }}:${{ steps.version.outputs.numero }}
+
+      - name: Escanear vulnerabilidades con Trivy
+        # Pinned al commit SHA de v0.35.0, ver pasos/06-seguridad.md para el por qué.
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        with:
+          image-ref: ${{ steps.imagen.outputs.nombre }}:${{ steps.version.outputs.numero }}
+          format: table
+          exit-code: "0"
+          severity: "CRITICAL,HIGH"
+
+      - name: Disparar el deploy en Render
+        # Secreto RENDER_DEPLOY_HOOK_URL_FASTAPI (distinto del de 04-app).
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL_FASTAPI }}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL_FASTAPI no está configurado todavía. Omitiendo deploy automático."
+          else
+            curl -s -X POST "$DEPLOY_HOOK"
+            echo "Deploy de Render disparado para FastAPI."
+          fi
