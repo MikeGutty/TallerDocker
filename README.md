@@ -26,10 +26,12 @@ taller-cicd/
 ├── 05-pasos/                      # guía de cada paso del taller
 ├── 06-docs/                       # guías de referencia y cheat sheets
 ├── 07-challenges/                 # retos para quienes ya tienen experiencia
+├── fastapi-app/                   # proyecto extra en Python/FastAPI, para comparar stacks
+├── ejercicios/                    # práctica autónoma de Git, Docker y Actions (no es parte de la secuencia)
 └── .github/workflows/             # workflows de CI/CD (crecen paso a paso)
 ```
 
-> Nota: la carpeta `.github/` va sin numerar y exactamente con ese nombre, es un requisito técnico de GitHub para que detecte los workflows de Actions.
+> Nota: la carpeta `.github/` va sin numerar y exactamente con ese nombre, es un requisito técnico de GitHub para que detecte los workflows de Actions. `fastapi-app/` y `ejercicios/` tampoco llevan número: son material paralelo a la secuencia principal, no pasos que haya que seguir en orden.
 
 ## Agenda del taller (4 horas, en dos sesiones de 2 horas)
 
@@ -91,6 +93,13 @@ Este taller tiene un alcance deliberadamente acotado para caber en 4 horas con p
 |---|---|---|
 | **Kubernetes y orquestación** | Es un salto conceptual grande (clusters, pods, manifests) que requiere entender Docker a fondo primero; no cabe en una introducción de 4 horas | Una vez cómodo con Docker y Compose, el siguiente paso natural es un curso dedicado a Kubernetes (o Docker Swarm, más simple, como puente) |
 | **Testing avanzado** (mocks, cobertura, tests de integración) | Los tests que usamos son intencionalmente simples, solo para que el pipeline de CI tenga algo real que ejecutar | Profundizar en el framework de testing de tu lenguaje (ej. Jest para Node) una vez que el flujo de CI/CD ya te resulte familiar |
+
+## Práctica extra: FastAPI y ejercicios autónomos
+
+Dos carpetas más, fuera de la secuencia numérica principal:
+
+- **[`fastapi-app/`](./fastapi-app/)** — el mismo tipo de proyecto, pero en Python/FastAPI (una API de tareas), con su propio Dockerfile multi-stage y sus propios workflows (`ci-fastapi.yml`, `docker-publish-fastapi.yml`, `healthcheck-fastapi.yml`). Sirve para comparar cómo cambian (o no) los mismos conceptos de CI/CD al cambiar de stack.
+- **[`ejercicios/`](./ejercicios/)** — enunciados cortos de práctica (Git, Docker, GitHub Actions) para resolver por tu cuenta, antes o después del taller. Son más básicos que los retos de `07-challenges/`, pensados para fijar lo visto en vivo.
 
 ## ¿Te atascaste con Docker?
 
